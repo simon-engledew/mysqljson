@@ -41,14 +41,22 @@ int main(int _argc, char **_argv)
   std::istream_iterator<char> end;
   std::string value(it, end);
 
-  Json_dom *dom = Json_dom::parse(value.data(), value.length(), NULL, NULL, false);
+  const char *msg;
+  size_t msg_offset;
+
+  Json_dom *dom = Json_dom::parse(value.data(), value.length(), &msg, &msg_offset, false);
+
   if (dom != NULL) {
     String buffer;
     Json_wrapper w(dom);
     w.to_string(&buffer, true, "format");
 
     std::cout << std::string(buffer.ptr(), buffer.length());
+  } else {
+    std::cout << msg << std::endl;
   }
 
   m_thd.cleanup_after_query();
+
+  exit(dom == NULL);
 }
