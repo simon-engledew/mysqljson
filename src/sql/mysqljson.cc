@@ -46,7 +46,7 @@ int main(int _argc, char **_argv)
     Json_wrapper w(dom);
     w.to_string(&buffer, true, "format");
 
-    std::cout << std::string(buffer.ptr(), buffer.length()) << std::endl;
+    std::cout << std::string(buffer.ptr(), buffer.length());
   }
 
   m_thd.cleanup_after_query();

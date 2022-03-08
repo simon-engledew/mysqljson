@@ -14,7 +14,7 @@ RUN curl -L https://github.com/mysql/mysql-server/archive/refs/tags/mysql-5.7.37
 
 RUN apt-get update && apt-get install --no-install-recommends -y build-essential cmake libssl-dev libncurses5-dev bison pkg-config
 
-RUN cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=true -DWITH_BOOST=boost
+RUN cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_BOOST=boost
 
 RUN make sql binlog rpl master slave
 
