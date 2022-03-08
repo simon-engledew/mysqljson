@@ -36,6 +36,7 @@ int main(int _argc, char **_argv)
   m_thd.thread_stack= (char*) &m_thd;
   m_thd.store_globals();
 
+  std::cin >> std::noskipws;
   std::istream_iterator<char> it(std::cin);
   std::istream_iterator<char> end;
   std::string value(it, end);
