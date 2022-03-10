@@ -1,5 +1,6 @@
 #undef WITH_PERFSCHEMA_STORAGE_ENGINE
 
+#include "mysqljson.h"
 #include <iostream>
 #include "sql_class.h"
 #include "opt_costconstantcache.h"
@@ -10,7 +11,11 @@
 #include "../storage/perfschema/pfs_server.h"
 #endif /* WITH_PERFSCHEMA_STORAGE_ENGINE */
 
-int main(int _argc, char **_argv)
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void init()
 {
   system_charset_info= &my_charset_utf8mb4_bin;
 
@@ -30,33 +35,59 @@ int main(int _argc, char **_argv)
   randominit(&sql_rand, 0, 0);
   transaction_cache_init();
   init_optimizer_cost_module(false);
+}
 
-  THD m_thd(false);
-  m_thd.set_new_thread_id();
-  m_thd.thread_stack= (char*) &m_thd;
-  m_thd.store_globals();
+int format_json(const char * value, int length, char ** result)
+{
+  const char *msg;
+
+  Json_dom *dom = Json_dom::parse(value, length, &msg, NULL, false);
+
+  String buffer;
+
+  if (dom == NULL) {
+    buffer.append(msg);
+    buffer.append("\n");
+
+    *result = buffer.c_ptr();
+
+    return 1;
+  }
+
+  Json_wrapper w(dom);
+
+  THD thd(false);
+  thd.set_new_thread_id();
+  thd.thread_stack= (char*) &thd;
+  thd.store_globals();
+
+  w.to_string(&buffer, true, "format");
+
+  thd.cleanup_after_query();
+
+  *result = buffer.c_ptr();
+
+  return 0;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+int main(int _argc, char **_argv)
+{
+  init();
 
   std::cin >> std::noskipws;
   std::istream_iterator<char> it(std::cin);
   std::istream_iterator<char> end;
   std::string value(it, end);
 
-  const char *msg;
-  size_t msg_offset;
+  char *output;
 
-  Json_dom *dom = Json_dom::parse(value.data(), value.length(), &msg, &msg_offset, false);
+  int err = format_json(value.data(), value.length(), &output);
 
-  if (dom != NULL) {
-    String buffer;
-    Json_wrapper w(dom);
-    w.to_string(&buffer, true, "format");
+  std::cout << output;
 
-    std::cout << std::string(buffer.ptr(), buffer.length());
-  } else {
-    std::cout << msg << std::endl;
-  }
-
-  m_thd.cleanup_after_query();
-
-  exit(dom == NULL);
+  exit(err);
 }

@@ -1,0 +1,2 @@
+ADD_LIBRARY(mysqljson SHARED mysqljson.cc)
+TARGET_LINK_LIBRARIES(mysqljson sql binlog rpl master slave)

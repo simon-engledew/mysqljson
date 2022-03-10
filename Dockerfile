@@ -14,23 +14,32 @@ RUN curl -L https://github.com/mysql/mysql-server/archive/refs/tags/mysql-5.7.37
 
 RUN apt-get update && apt-get install --no-install-recommends -y build-essential cmake libssl-dev libncurses5-dev bison pkg-config
 
-RUN cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_BOOST=boost
+ARG BUILD_TYPE=Release
+
+RUN cmake . -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DWITH_BOOST=boost
 
 RUN make sql binlog rpl master slave
 
-RUN echo 'MYSQL_ADD_EXECUTABLE(mysqljson mysqljson.cc)' >> sql/CMakeLists.txt \
-    && echo 'TARGET_LINK_LIBRARIES(mysqljson sql binlog rpl master slave)' >> sql/CMakeLists.txt
+ARG TARGET=executable
+
+COPY targets/$TARGET /tmp/
+
+RUN cat /tmp/$TARGET >> sql/CMakeLists.txt
 
 COPY src/ ./
 
-RUN cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_BOOST=boost
+RUN cmake . -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DWITH_BOOST=boost
 
 RUN make mysqljson
+
+FROM build AS stripped-build
 
 RUN strip sql/mysqljson
 
 FROM debian:11.2-slim
 
-COPY --from=build /workspace/mysql-server/sql/mysqljson /usr/bin/mysqljson
+COPY --from=stripped-build /workspace/mysql-server/sql/mysqljson /usr/bin/mysqljson
+
+USER nobody
 
 ENTRYPOINT [ "/usr/bin/mysqljson" ]

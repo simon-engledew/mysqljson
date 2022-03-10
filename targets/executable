@@ -1,0 +1,2 @@
+MYSQL_ADD_EXECUTABLE(mysqljson mysqljson.cc)
+TARGET_LINK_LIBRARIES(mysqljson sql binlog rpl master slave
